@@ -1,7 +1,11 @@
-import sys
 import os
+<<<<<<< HEAD
+os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+import sys
+=======
 from unittest import TextTestResult
 
+>>>>>>> c06b9a4c38e79c37fd5c23ad3626d481172de9f4
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
@@ -43,7 +47,11 @@ def run_example(task_prompt: TaskType, image, text_input, model, processor, devi
     return parsed_answer
 
 
+<<<<<<< HEAD
+def get_watermark_mask(image, model, processor, device, user_mask_parameter=None, user_assigned=False):
+=======
 def get_watermark_mask(image, model, processor, device, user_mask_parameter, user_assigned=False):
+>>>>>>> c06b9a4c38e79c37fd5c23ad3626d481172de9f4
     text_input = 'watermark'
     task_prompt = TaskType.OPEN_VOCAB_DETECTION  # Use OPEN_VOCAB_DETECTION
     parsed_answer = run_example(task_prompt, image, text_input, model, processor, device)
@@ -73,6 +81,13 @@ def get_watermark_mask(image, model, processor, device, user_mask_parameter, use
                 print(f"Skipping region: Bounding box covers more than 10% of the image. BBox Area: {bbox_area}, Image Area: {total_image_area}")
     else:
         print("No bounding boxes found in parsed answer.")
+<<<<<<< HEAD
+    if user_assigned is True:
+        for each_mask in user_mask_parameter:
+            x1, y1, x2, y2 = each_mask
+            print(x1, y1, x2, y2)
+            draw.rectangle([x1, y1, x2, y2], fill=255)
+=======
     # User can assign an area which is watermark area
     if user_assigned is True:
         for each_mask in user_mask_parameter:
@@ -80,6 +95,7 @@ def get_watermark_mask(image, model, processor, device, user_mask_parameter, use
             print(x1, x2, y1, y2)
             draw.rectangle([x1, y1, x2, y2], fill=255)
 
+>>>>>>> c06b9a4c38e79c37fd5c23ad3626d481172de9f4
     return mask
 
 
@@ -106,21 +122,22 @@ def main():
     # Parse command line arguments
     import argparse
 
-    parser = argparse.ArgumentParser(description='Watermark Remover')
-    parser.add_argument('input_image', type=str, help='Path to input image')
-    parser.add_argument('output_image', type=str, help='Path to save output image')
+    parser = argparse.ArgumentParser(description='Batch Watermark Remover')
+    parser.add_argument('input_dir', type=str, help='Path to input images folder')
+    parser.add_argument('output_dir', type=str, help='Path to save output images folder')
     args = parser.parse_args()
 
-    input_image_path = args.input_image
-    output_image_path = args.output_image
+    input_dir = args.input_dir
+    output_dir = args.output_dir
 
-    # Check if input image exists
-    if not os.path.exists(input_image_path):
-        print(f"Input image {input_image_path} does not exist.")
+    # Check if input directory exists
+    if not os.path.exists(input_dir):
+        print(f"Input directory {input_dir} does not exist.")
         sys.exit(1)
 
-    # Load the image
-    image = Image.open(input_image_path).convert("RGB")
+    # Create output directory if it doesn't exist
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     # Load Florence2 model and processor
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -134,20 +151,39 @@ def main():
     # Load LaMa model
     model_manager = ModelManager(name="lama", device=device)
 
-    # Get watermark mask
-    mask_image = get_watermark_mask(image, florence_model, florence_processor, device, [50, 120, 475, 205], True)
+    # Process each image in the input directory
+    for filename in os.listdir(input_dir):
+        input_image_path = os.path.join(input_dir, filename
 
-    # Process image with LaMa
-    result_image = process_image_with_lama(np.array(image), np.array(mask_image), model_manager)
+        # Skip non-image files
+        if not filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
+            print(f"Skipping non-image file: {filename}")
+            continue
 
-    # Convert the result from BGR to RGB
-    result_image_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
+        # Load the image
+        try:
+            image = Image.open(input_image_path).convert("RGB")
+        except Exception as e:
+            print(f"Failed to open image {filename}: {e}")
+            continue
 
-    # Convert result_image from NumPy array to PIL Image
-    result_image_pil = Image.fromarray(result_image_rgb)
-    result_image_pil.save(output_image_path)
+        # Get watermark mask
+        mask_image = get_watermark_mask(image, florence_model, florence_processor, device,
+                                        [(50, 120, 480, 210), (2437, 1394, 2517, 1466)], True)
 
-    print(f"Processed image saved to {output_image_path}")
+        # Process image with LaMa
+        result_image = process_image_with_lama(np.array(image), np.array(mask_image), model_manager)
+
+        # Convert the result from BGR to RGB
+        result_image_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
+
+        # Convert result_image from NumPy array to PIL Image
+        result_image_pil = Image.fromarray(result_image_rgb)
+
+        # Save the processed image
+        output_image_path = os.path.join(output_dir, filename)
+        result_image_pil.save(output_image_path)
+        print(f"Processed image saved to {output_image_path}")
 
 
 if __name__ == '__main__':
