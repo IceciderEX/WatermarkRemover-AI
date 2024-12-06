@@ -53,6 +53,8 @@ def get_watermark_mask(image, model, processor, device, user_mask_parameter=None
     image_width, image_height = image.size
     total_image_area = image_width * image_height
 
+    print("this picture's width is:" + str(image_width) + "and height is " + str(image_height) )
+
     # Create a mask based on bounding boxes
     mask = Image.new("L", image.size, 0)  # "L" mode for single-channel grayscale
     draw = ImageDraw.Draw(mask)
@@ -73,9 +75,16 @@ def get_watermark_mask(image, model, processor, device, user_mask_parameter=None
     else:
         print("No bounding boxes found in parsed answer.")
 
-    if user_assigned is True:
+    # user's mask parameter
+    if user_assigned is True and user_mask_parameter is not None:
         for each_mask in user_mask_parameter:
             x1, y1, x2, y2 = each_mask
+            x_illegal = x1 < 0 or x1 > image_width or x2 < 0 or x2 > image_width or x1 > x2
+            y_illegal = y1 < 0 or y1 > image_height or y2 < 0 or y2 > image_height or y1 > y2
+            if x_illegal or y_illegal:
+                print("user assigned mask is invalid")
+                continue
+
             print(x1, y1, x2, y2)
             draw.rectangle([x1, y1, x2, y2], fill=255)
 
@@ -108,10 +117,13 @@ def main():
     parser = argparse.ArgumentParser(description='Batch Watermark Remover')
     parser.add_argument('input_dir', type=str, help='Path to input images folder')
     parser.add_argument('output_dir', type=str, help='Path to save output images folder')
+    parser.add_argument('--watermarks', nargs='+', action='append', metavar=('X1', 'Y1', 'X2', 'Y2'),
+                        type=int, help='Custom watermark regions in format X1 Y1 X2 Y2')
     args = parser.parse_args()
 
     input_dir = args.input_dir
     output_dir = args.output_dir
+    user_mask_parameter = args.watermarks if args.watermarks else []
 
     # Check if input directory exists
     if not os.path.exists(input_dir):
@@ -151,8 +163,9 @@ def main():
             continue
 
         # Get watermark mask
+        # todo: further implement user parameter
         mask_image = get_watermark_mask(image, florence_model, florence_processor, device,
-                                        [(50, 120, 480, 210), (2437, 1394, 2517, 1466)], True)
+                                        user_mask_parameter, bool(user_mask_parameter))
 
         # Process image with LaMa
         result_image = process_image_with_lama(np.array(image), np.array(mask_image), model_manager)
@@ -171,5 +184,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    i = 1
 
