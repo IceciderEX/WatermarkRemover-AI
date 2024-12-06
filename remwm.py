@@ -1,5 +1,7 @@
 import sys
 import os
+from unittest import TextTestResult
+
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
@@ -41,10 +43,12 @@ def run_example(task_prompt: TaskType, image, text_input, model, processor, devi
     return parsed_answer
 
 
-def get_watermark_mask(image, model, processor, device):
+def get_watermark_mask(image, model, processor, device, user_mask_parameter, user_assigned=False):
     text_input = 'watermark'
     task_prompt = TaskType.OPEN_VOCAB_DETECTION  # Use OPEN_VOCAB_DETECTION
     parsed_answer = run_example(task_prompt, image, text_input, model, processor, device)
+
+    print(parsed_answer)
 
     # Get image dimensions
     image_width, image_height = image.size
@@ -69,6 +73,12 @@ def get_watermark_mask(image, model, processor, device):
                 print(f"Skipping region: Bounding box covers more than 10% of the image. BBox Area: {bbox_area}, Image Area: {total_image_area}")
     else:
         print("No bounding boxes found in parsed answer.")
+    # User can assign an area which is watermark area
+    if user_assigned is True:
+        for each_mask in user_mask_parameter:
+            x1, x2, y1, y2 = map(int, each_mask)
+            print(x1, x2, y1, y2)
+            draw.rectangle([x1, y1, x2, y2], fill=255)
 
     return mask
 
@@ -125,7 +135,7 @@ def main():
     model_manager = ModelManager(name="lama", device=device)
 
     # Get watermark mask
-    mask_image = get_watermark_mask(image, florence_model, florence_processor, device)
+    mask_image = get_watermark_mask(image, florence_model, florence_processor, device, [50, 120, 475, 205], True)
 
     # Process image with LaMa
     result_image = process_image_with_lama(np.array(image), np.array(mask_image), model_manager)
