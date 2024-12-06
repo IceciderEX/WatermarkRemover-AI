@@ -1,11 +1,6 @@
 import os
-<<<<<<< HEAD
 os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 import sys
-=======
-from unittest import TextTestResult
-
->>>>>>> c06b9a4c38e79c37fd5c23ad3626d481172de9f4
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
@@ -47,11 +42,7 @@ def run_example(task_prompt: TaskType, image, text_input, model, processor, devi
     return parsed_answer
 
 
-<<<<<<< HEAD
 def get_watermark_mask(image, model, processor, device, user_mask_parameter=None, user_assigned=False):
-=======
-def get_watermark_mask(image, model, processor, device, user_mask_parameter, user_assigned=False):
->>>>>>> c06b9a4c38e79c37fd5c23ad3626d481172de9f4
     text_input = 'watermark'
     task_prompt = TaskType.OPEN_VOCAB_DETECTION  # Use OPEN_VOCAB_DETECTION
     parsed_answer = run_example(task_prompt, image, text_input, model, processor, device)
@@ -81,21 +72,13 @@ def get_watermark_mask(image, model, processor, device, user_mask_parameter, use
                 print(f"Skipping region: Bounding box covers more than 10% of the image. BBox Area: {bbox_area}, Image Area: {total_image_area}")
     else:
         print("No bounding boxes found in parsed answer.")
-<<<<<<< HEAD
+
     if user_assigned is True:
         for each_mask in user_mask_parameter:
             x1, y1, x2, y2 = each_mask
             print(x1, y1, x2, y2)
             draw.rectangle([x1, y1, x2, y2], fill=255)
-=======
-    # User can assign an area which is watermark area
-    if user_assigned is True:
-        for each_mask in user_mask_parameter:
-            x1, x2, y1, y2 = map(int, each_mask)
-            print(x1, x2, y1, y2)
-            draw.rectangle([x1, y1, x2, y2], fill=255)
 
->>>>>>> c06b9a4c38e79c37fd5c23ad3626d481172de9f4
     return mask
 
 
@@ -153,7 +136,7 @@ def main():
 
     # Process each image in the input directory
     for filename in os.listdir(input_dir):
-        input_image_path = os.path.join(input_dir, filename
+        input_image_path = os.path.join(input_dir, filename)
 
         # Skip non-image files
         if not filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
